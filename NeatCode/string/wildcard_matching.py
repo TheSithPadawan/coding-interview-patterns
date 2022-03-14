@@ -12,7 +12,7 @@ case to continue look at:
 (1) current char of p == current char of s ==> move forward
 (2) current char of p == '*'. enumerate the # of chars * can represent, which is [0, len(s) - sptr]
 
-finally add cache to turn into a dp memoization..
+finally add cache to turn into a dp 
 """
 
 def isMatch(s, p):
