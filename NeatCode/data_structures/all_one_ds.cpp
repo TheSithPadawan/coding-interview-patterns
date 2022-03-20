@@ -1,6 +1,14 @@
 // lc link: https://leetcode.com/problems/all-oone-data-structure
 
-// not sure why this version is timing out..
+// Flex: 100 ms, faster than 96.43% of C++ online submissions for All O`one Data Structure.
+// Also super readable
+
+/*
+To break it down, two operations:
+(1) cases when a new node is needed to be created in the list
+(2) cases when a transfer (from a node to an adjacent node) is sufficient
+Either is handled by a separate function
+*/
 
 #define um unordered_map
 
@@ -98,15 +106,22 @@ public:
     }
     
     string getMaxKey() {
-        Node maxnode = order.back();
-        return *maxnode.keys.begin();
+        return order.empty() ? "" : *(order.back().keys.begin());
     }
     
     string getMinKey() {
-        Node minnode = order.front();
-        return *minnode.keys.begin();
+        return order.empty() ? "" : *(order.front().keys.begin());
     }
 };
+
+/**
+ * Your AllOne object will be instantiated and called as such:
+ * AllOne* obj = new AllOne();
+ * obj->inc(key);
+ * obj->dec(key);
+ * string param_3 = obj->getMaxKey();
+ * string param_4 = obj->getMinKey();
+ */
 
 /**
  * Your AllOne object will be instantiated and called as such:
