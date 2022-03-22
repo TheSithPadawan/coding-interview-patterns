@@ -10,3 +10,5 @@ Problem list
 4. Moving average data stream (Deque)
 5. All O(1) Data Structure (LinkedList)
 6. Design circular queue (LinkedList)
+7. Sliding window median / Median in data stream (two heaps); sliding window max
+can be solved in multiset in similar fashion
