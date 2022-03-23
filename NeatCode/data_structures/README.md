@@ -12,3 +12,5 @@ Problem list
 6. Design circular queue (LinkedList)
 7. Sliding window median / Median in data stream (two heaps); sliding window max
 can be solved in multiset in similar fashion
+8. Time-based kv store (multiset)
+9. Design Auto Complete (Trie + DFS)
