@@ -6,3 +6,5 @@ A collection of string processing problems
 4. Integer to Roman
 5. String addition
 6. String multiplication (todo)
+7. Calculators (key pattern to learn)
+8. Decode String (the same question as 7 if you learned the pattern)
