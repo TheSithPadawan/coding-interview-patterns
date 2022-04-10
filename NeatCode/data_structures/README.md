@@ -16,3 +16,4 @@ can be solved in multiset in similar fashion
 9. Design Auto Complete (Trie + DFS)
 10. Skyline (multiset to track maximum height so far)
 11. Contains Duplicates III (sliding window pattern + multiset)
+12. Sliding window max (deque or multiset)
