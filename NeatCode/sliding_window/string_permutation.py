@@ -25,3 +25,29 @@ class Solution:
                 if charmap[left] > 0:
                     count += 1
         return False
+
+# solution 2
+class Solution:
+    def checkInclusion(self, s1: str, s2: str) -> bool:
+        if len(s2) < len(s1):
+            return False
+        needs = collections.defaultdict(int)
+        for char in s1:
+            needs[char] += 1
+        target = len(s1)
+        i, j = 0, 0
+        while i < len(s2):
+            while j < len(s2) and j - i < len(s1):
+                needs[s2[j]] -= 1
+                # original string can have multiple the same character
+                if needs[s2[j]] >= 0:
+                    target -= 1
+                j += 1
+            if j - i == len(s1) and target == 0:
+                return True
+            # update left edge
+            needs[s2[i]] += 1
+            if needs[s2[i]] > 0:
+                target += 1
+            i += 1
+        return False
