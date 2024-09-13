@@ -1,3 +1,15 @@
+# lc link: https://leetcode.com/problems/minimum-interval-to-include-each-query/
+"""
+naive solution:
+Number of intervals = m, number of queries = n O(mn)
+
+Optimized solutino: O(mlgm + nlgn)
+step 1. sort queries 
+step 2. 
+for each query, add qualifying intervals `num >= intervals[i][0]` to heap: order by (segment length, segment end).
+step 3. remove the ones that do not qualify: `num > intervals[i][1]`, the remaining one must be the qualifying one
+
+"""
 class Solution:
     def minInterval(self, intervals: List[List[int]], queries: List[int]) -> List[int]:
         intervals.sort()
