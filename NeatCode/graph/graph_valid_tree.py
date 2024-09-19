@@ -20,7 +20,6 @@ class Solution:
                     continue
                 if not dfs(nei, node):
                     return False
-            seen.remove(node)
             visit.append(node)
             return True
         
