@@ -18,6 +18,10 @@ Example
 每个task 有两部分：起始时间（HHMM格式） 和持续时间(in min)
 2108 45 意思是 一个21:08开始的task 持续了45分钟
 可以假设 所有task都在0000 and 2359之间开始以及结束
+
+Similar questions on Lc
+1. meeting room II: https://leetcode.com/problems/meeting-rooms-ii/description/?envType=company&envId=lyft&favoriteSlug=lyft-all
+2. processing tasks using servers: https://leetcode.com/problems/process-tasks-using-servers/description/?envType=company&envId=lyft&favoriteSlug=lyft-all
 """
 
 """
