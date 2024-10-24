@@ -31,7 +31,6 @@ def solve(rh_users, new_users):
         if user in visit:
             continue
         dfs(user)
-    # sorting for count
     count_list = [(val, key) for key, val in count.items()]
     count_list.sort(reverse=True)
     result = []
