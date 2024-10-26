@@ -2,7 +2,7 @@
 Question link: https://leetcode.com/discuss/interview-question/3158526/Offset-Ordering
 
 Algorithm:
-O(n) space, worst case O(n^2) algorithm
+O(n) space, O(n) algorithm
 [2, 1, 0, 5, 4]
 we can only update committed offset if the processing offset is current highest commit + 1
 result = [-1, -1, 2, -1, -1]
