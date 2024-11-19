@@ -20,7 +20,6 @@ def commit_offset(offsets: list[int]) -> list[int]:
                 highest_offset += 1
             output.append(highest_offset)
         else:
-            uncommits.add(offset)
             output.append(-1)
     return output
 

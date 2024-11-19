@@ -3,6 +3,7 @@
 
 
 from collections import defaultdict
+import heapq
 
 
 def solve(rh_users, new_users):
@@ -31,12 +32,19 @@ def solve(rh_users, new_users):
         if user in visit:
             continue
         dfs(user)
-    count_list = [(val, key) for key, val in count.items()]
-    count_list.sort(reverse=True)
+    minheap = []
+    """
+    heap size = 3 
+    """
+    for key, val in count.items():
+        heapq.heappush(minheap, (val, key))
+        if len(minheap) > 3:
+            heapq.heappop(minheap)
+    # from big to small
     result = []
-    for i in range(3):
-        result.append((count_list[i][1], count_list[i][0]))
-    return result
+    while minheap:
+        result.append(heapq.heappop(minheap))
+    return result[::-1]
 
 if __name__ == '__main__':
     rh_users = ['A', 'B', 'C']

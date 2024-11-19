@@ -1,180 +1,166 @@
-"""
-Question: https://leetcode.com/playground/RQBPRVsn
-"""
+# https://leetcode.com/playground/RQBPRVsn
 
 from collections import defaultdict
 from math import ceil
-from sortedcontainers import SortedDict
+from sortedcontainers import SortedList
 
-import heapq
-
-class Task:
+class Stock:
     def __init__(self, price, symbol):
         self.price = price
         self.symbol = symbol
 
-    # Define the custom comparator
-    def __lt__(self, other):
-        # Custom comparison: lower priority values come first
-        if self.price == other.price:
-            return self.symbol > other.symbol
-        return self.price < other.price
-    
     def __eq__(self, value: object) -> bool:
         return self.price == value.price and self.symbol == value.symbol
     
+    def __lt__(self, other: object) -> bool:
+        if self.price == other.price:
+            return self.symbol < other.symbol
+        return self.price > other.price
+    
     def __hash__(self) -> int:
         return hash('.'.join([str(self.price), str(self.symbol)]))
-    
-    def __str__(self) -> str:
-        return f'({self.price},{self.symbol})'
 
-def trade_stocks(stocks):
-    money = 1000
+def trade_stock(tx_type, portfolio, ticker, quantity, price, cash):
+    if tx_type == 'B':
+        portfolio[ticker] += quantity
+        cash -= price * quantity
+    else:
+        portfolio[ticker] -= quantity
+        cash += price * quantity
+    return cash
+
+# question 1
+def get_user_portfolio(trades):
+    cash = 1000
     portfolio = defaultdict(int)
-    for tx in stocks:
-        time, symbol, t, quantity, amount = tx
-        if t == 'B':
-            portfolio[symbol] += int(quantity)
-            money -= int(amount) * int(quantity)
-        else:
-            portfolio[symbol] -= int(quantity)
-            money += int(amount) * int(quantity)
-    output = [['CASH', money]]
-    for symbol, quantity in portfolio.items():
-        output.append([symbol, str(quantity)])
-    return output
+    result = []
+    for trade in trades:
+        _, ticker, tx_type, quantity, price = trade
+        quantity = int(quantity)
+        price = int(price)
+        cash = trade_stock(tx_type, portfolio, ticker, quantity, price, cash)
+        
+    result.append(['CASH', cash])
+    for k, v in portfolio.items():
+        result.append([k, str(v)])
+    return result
 
-def margin_call(portfolio, stocks):
-    print('margincall begin portfolio', portfolio)
-    deficit = int(portfolio[0][1])
-    if deficit >= 0:
-        return portfolio
-    deficit = abs(deficit)
-    sd = SortedDict()
-    last_prices = defaultdict(int)
-    for stock in stocks:
-        time, symbol, t, quantity, price = stock
-        last_prices[symbol] = int(price)
+# question 2: margin call
+def get_user_portfolio_with_margin_call(trades):
+    portfolio = defaultdict(int)
+    last_traded_price = dict()
+    cash = 1000
+    result = []
+    for trade in trades:
+        _, ticker, tx_type, quantity, price = trade
+        quantity = int(quantity)
+        price = int(price)
+        # trade stock
+        cash = trade_stock(tx_type, portfolio, ticker, quantity, price, cash)
+        # update last trade price
+        last_traded_price[ticker] = price
+        cash = margin_call(cash, tx_type, portfolio, last_traded_price)
+    result.append(['CASH', cash])
+    for k, v in portfolio.items():
+        result.append([k, str(v)])
+  
+    return result 
 
-    for i in range(1, len(portfolio)):
-        symbol, shares = portfolio[i]
-        sd[Task(last_prices[symbol], symbol)] = int(shares)
+# question 3: margin call with collateral 
+def get_user_portfolio_with_margin_call_collateral(trades):
+    portfolio = defaultdict(int)
+    last_traded_price = dict()
+    cash = 1000
+    result = []
+    collaterals = defaultdict(int)
+    for trade in trades:
+        _, ticker, tx_type, quantity, price = trade
+        quantity = int(quantity)
+        price = int(price)
+        if ticker.endswith('O') and tx_type == 'B':
+            collateral_stock = ticker[:-1]
+            portfolio[collateral_stock] -= quantity
+            if portfolio[collateral_stock] == 0:
+                portfolio.pop(collateral_stock)
+                if collateral_stock in last_traded_price:
+                    last_traded_price.pop(collateral_stock)
+            collaterals[collateral_stock] += quantity
+        elif ticker.endswith('O') and tx_type == 'S':
+            collateral_stock = ticker[:-1]
+            portfolio[collateral_stock] += quantity
+            collaterals[collateral_stock] -= quantity
+            if collaterals[collateral_stock] == 0:
+                collaterals[collateral_stock].pop(collateral_stock)
+        # trade stock
+        cash = trade_stock(tx_type, portfolio, ticker, quantity, price, cash)
+        # update last trade price
+        last_traded_price[ticker] = price
+        cash = margin_call_with_collateral(cash, tx_type, portfolio, last_traded_price, collaterals)
+    result.append(['CASH', cash])
+    for k, v in portfolio.items():
+        result.append([k, str(v)])
+    
+    # add back collateral stocks 
+    for k, v in collaterals.items():
+        result.append([k, str(v)])
+    return result[0] + sorted(result[1:])
 
-    # start margin call
-    while deficit > 0:
-        if len(sd) == 0:
-            print('not possible for margin call')
-            return [['CASH', str(-deficit)]]
-        task = list(sd.keys())[-1]
-        count = sd[task]
-        if deficit % task.price != 0:
-            needed = ceil(deficit / task.price)
-        else:
-            needed = deficit // task.price
-        if needed >= count:
-            # sell all for this symbol
-            deficit -= count * task.price 
-            sd.pop(task)
-        else:
-            deficit -= needed * task.price  
-            sd[task] -= needed
-    print('deficit at the end', deficit) 
-    output = [['CASH', str(-deficit)]]
-    for k, v in sd.items():
-        output.append([k.symbol, str(v)])
-    return output
+def margin_call(cash, tx_type, portfolio, last_traded_price):
+    print('cash:', cash)
+    print('last traded prices:', last_traded_price)
+    print('portfolio', portfolio)
+    if tx_type != 'B' or cash >= 0:
+        return cash 
+    sl = SortedList()
+    for k, v in last_traded_price.items():
+        current = Stock(v, k)
+        sl.add(current)
+    i = 0
+    while cash < 0 and i < len(sl):
+        p, stock = sl[i].price, sl[i].symbol
+        num_stocks_to_sell = min(ceil(abs(cash) / p), portfolio[stock])
+        print('selling', num_stocks_to_sell, stock, 'at', p, 'price')
+        portfolio[stock] -= num_stocks_to_sell
+        if portfolio[stock] == 0:
+            portfolio.pop(stock)
+            last_traded_price.pop(stock)
+        cash += p * num_stocks_to_sell
+        i += 1
+    return cash 
 
-def get_user_portfolio(stocks):
-    # Q1: trade stocks 
-    output = trade_stocks(stocks)
-    # Q2: margin call
-    output = margin_call(output, stocks)
-    return output
-
-def margin_call_with_collateral(portfolio, stocks):
-    print('margincall begin portfolio', portfolio)
-    deficit = int(portfolio[0][1])
-    if deficit >= 0:
-        return portfolio
-    deficit = abs(deficit)
-    sd = SortedDict()
-    last_prices = defaultdict(int)
-    for stock in stocks:
-        time, symbol, t, quantity, price = stock
-        last_prices[symbol] = int(price)
-
-    reserved_stocks_symbol = []
-    for i in range(1, len(portfolio)):
-        symbol, shares = portfolio[i]
-        # print(symbol, symbol[-1], symbol[-1] == 'O')
-        sd[Task(last_prices[symbol], symbol)] = int(shares)
-        if symbol[-1] == 'O':
-            reserved_stocks_symbol.append((symbol[:-1], int(shares)))
-    print('reserved_stocks_symbol', reserved_stocks_symbol)
-    remains = dict()
-    # updated possible margin call collaterals
-    for reserved in reserved_stocks_symbol:
-        symbol = reserved[0]
-        withheld = reserved[1]
-        sd[Task(last_prices[symbol], symbol)] = sd[Task(last_prices[symbol], symbol)] - withheld
-        remains[Task(last_prices[symbol], symbol)] = withheld
-        if sd[Task(last_prices[symbol], symbol)] == 0:
-            sd.pop(Task(last_prices[symbol], symbol))
-     # start margin call
-    while deficit > 0:
-        if len(sd) == 0:
-            print('not possible for margin call')
-            return [['CASH', str(-deficit)]]
-        task = list(sd.keys())[-1]
-        sell_special = False
-        if task.symbol[-1] == 'O':
-            sell_special = True
-        count = sd[task]
-        if deficit % task.price != 0:
-            needed = ceil(deficit / task.price)
-        else:
-            needed = deficit // task.price
-        if needed >= count:
-            # sell all for this symbol
-            deficit -= count * task.price 
-            sd.pop(task)
-            # free up collateral for sale
-            if sell_special:
-                collateral = task.symbol[:-1]
-                sd[Task(last_prices[collateral], collateral)] += count
-                remains[Task(last_prices[collateral], collateral)] -= count
-                if remains[Task(last_prices[collateral], collateral)] == 0:
-                    remains.pop(Task(last_prices[collateral], collateral))
-        else:
-            deficit -= needed * task.price  
-            sd[task] -= needed
-            if sell_special:
-                collateral = task.symbol[:-1]
-                sd[Task(last_prices[collateral], collateral)] += needed
-                remains[Task(last_prices[collateral], collateral)] -= needed
-                if remains[Task(last_prices[collateral], collateral)] == 0:
-                    remains.pop(Task(last_prices[collateral], collateral))
-    print('deficit at the end', deficit) 
-    output = [['CASH', str(-deficit)]]
-    for k, v in sd.items():
-        output.append([k.symbol, str(v)])
-    # adding back those collaterals 
-    for k, v in remains.items():
-        output.append([k.symbol, str(v)])
-    return output
-
-
-def get_user_portfolio_with_collateral(stocks):
-    portfolio = trade_stocks(stocks)
-    return margin_call_with_collateral(portfolio, stocks)
-
+def margin_call_with_collateral(cash, tx_type, portfolio, last_traded_price, collaterals):
+    # during the margin call process, can collateral be sold as well?
+    print('cash:', cash)
+    print('last traded prices:', last_traded_price)
+    print('portfolio', portfolio)
+    if tx_type != 'B' or cash >= 0:
+        return cash 
+    sl = SortedList()
+    for k, v in last_traded_price.items():
+        current = Stock(v, k)
+        sl.add(current)
+    i = 0
+    while cash < 0 and i < len(sl):
+        p, stock = sl[i].price, sl[i].symbol
+        num_stocks_to_sell = min(ceil(abs(cash) / p), portfolio[stock])
+        print('selling', num_stocks_to_sell, stock, 'at', p, 'price')
+        portfolio[stock] -= num_stocks_to_sell
+        if portfolio[stock] == 0:
+            portfolio.pop(stock)
+            last_traded_price.pop(stock)
+        cash += p * num_stocks_to_sell
+        # if we sold a special stock, free up the collateral as well 
+        if stock.endswith('O'):
+            collateral = stock[:-1]
+            collaterals[collateral] -= num_stocks_to_sell
+            portfolio[collateral] += num_stocks_to_sell
+        i += 1
+    return cash 
 
 if __name__ == '__main__':
-    """
     # Q1
     stocks = [["1", "AAPL", "B", "10", "10"], ["3", "GOOG", "B", "20", "5"], ["10", "AAPL", "S", "5", "15"]]
-    print(trade_stocks(stocks))
+    print(get_user_portfolio(stocks))
 
     # Q2
     stocks = [
@@ -184,20 +170,16 @@ if __name__ == '__main__':
     ["4", "ABPL", "S", "2", "80"],
     ["5", "GOOG", "B", "15", "30"]
 ]   
-    # print(trade_stocks(stocks))
-    output = get_user_portfolio(stocks)
-    print (output)
+    print(get_user_portfolio_with_margin_call(stocks))
 
-    # Q2 Test case 2
+    # Q2 test case 2
     stocks = [
     ["1", "AAPL", "B", "10", "100"],
     ["2", "AAPL", "S", "2", "80"],
     ["3", "GOOG", "B", "15", "20"]
 ]
-    output = get_user_portfolio(stocks)
-    print (output)
+    print(get_user_portfolio_with_margin_call(stocks))
 
-    # Q2 Test case 3
     stocks = [
     ["1", "AAPL", "B", "5", "100"],
     ["2", "ABPL", "B", "5", "100"],
@@ -205,10 +187,9 @@ if __name__ == '__main__':
     ["4", "ABPL", "S", "2", "120"],
     ["5", "GOOG", "B", "15", "30"]
 ]
-    output = get_user_portfolio(stocks)
-    print (output)
-
-    # Q2 Test case 4
+    print(get_user_portfolio_with_margin_call(stocks))
+    
+    # Q2 test case 4: need to sell multiple stocks
     stocks = [
         ["1", "AAPL", "B", "5", "100"],
         ["2", "ABPL", "B", "5", "100"],
@@ -216,20 +197,17 @@ if __name__ == '__main__':
         ["4", "ABPL", "S", "2", "120"],
         ["5", "GOOG", "B", "10", "80"]
     ]
-    output = get_user_portfolio(stocks)
-    print (output)
-    """
+    print(get_user_portfolio_with_margin_call(stocks))
 
-    # Q3 Test case 1
+    # Q3 test case 0
     stocks = [
     ["1", "AAPL", "B", "5", "100"],
     ["2", "GOOG", "B", "5", "75"],
     ["3", "AAPLO", "B", "5", "50"]
     ]
-    output = get_user_portfolio_with_collateral(stocks)
-    print(output)
+    print(get_user_portfolio_with_margin_call_collateral(stocks))
 
-    # Q3 Test case 2
+    # Q3 test case 1
     stocks = [
     ["1", "AAPL", "B", "6", "50"],
     ["2", "GOOG", "B", "6", "50"],
@@ -237,7 +215,4 @@ if __name__ == '__main__':
     ["4", "GOOG0", "B", "5", "25"],
     ["5", "TEST", "B", "250", "1"]
     ]
-    output = get_user_portfolio_with_collateral(stocks)
-    print(output)
-
-
+    print(get_user_portfolio_with_margin_call_collateral(stocks))
