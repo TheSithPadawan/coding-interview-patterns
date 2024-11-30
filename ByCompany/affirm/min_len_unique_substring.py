@@ -36,6 +36,80 @@ def find_min_len_unique_substring(words):
         
     return result
 
+"""
+https://leetcode.com/problems/shortest-uncommon-substring-in-an-array/?envType=company&envId=affirm&favoriteSlug=affirm-all
+
+class Solution:
+    def shortestSubstrings(self, arr: List[str]) -> List[str]:
+        # brute force solution O(n^2m^2) LOL 
+        min_len = [2**31 - 1] * len(arr)
+        result = [""] * len(arr)
+        for i, s in enumerate(arr):
+            # generate all substrings 
+            substrs = []
+            for start in range(len(s)):
+                for L in range(1, len(s)+1):
+                    substr = s[start: start+L]
+                    substrs.append(substr)
+            # maintain lexico order
+            substrs.sort()
+            for substr in substrs:
+                found = False
+                for j in range(len(arr)):
+                    if i == j:
+                        continue
+                    # eliminate answer
+                    if substr in arr[j]:
+                        found = True
+                        break
+                if not found and len(substr) < min_len[i]:
+                    min_len[i] = len(substr)
+                    result[i] = substr
+        return result
+               
+# Optimized solution                
+ class Solution:
+    def shortestSubstrings(self, arr: List[str]) -> List[str]:
+        # More optimized solution: Count + Aggregate pattern
+        # Count each substring subtstr: set(words)
+        # Aggregate:
+        # find the one with unique word, and output.
+
+        # Edge case: ["fhi","ct","s","o","o"]
+        # However if we have duplicated string, then the dup ones should have no answer 
+        # So we just need to skip them
+        word_to_index = defaultdict()
+        result = [''] * len(arr)
+        substrs_words = defaultdict(set)
+        dups = set()
+        # this step takes O(N * M^2)
+        for i, word in enumerate(arr):
+            if word in word_to_index:
+                dups.add(word)
+                continue
+            word_to_index[word] = i
+            # generate all substring
+            for start in range(len(word)):
+                for L in range(1, len(word) + 1):
+                    substr = word[start: start + L]
+                    substrs_words[substr].add(word)
+        # aggregate result
+        for substr, words in substrs_words.items():
+            if len(words) == 1:
+                # only count the unique ones
+                word = list(words)[0]
+                if word in dups:
+                    continue
+                index = word_to_index[word]
+                if result[index] == '':
+                    result[index] = substr
+                elif len(substr) < len(result[index]):
+                    result[index] = substr
+                elif len(substr) == len(result[index]) and substr < result[index]: # lexico order
+                    result[index] = substr
+        return result                       
+"""
+
 
 
 if __name__ == '__main__':
