@@ -30,6 +30,10 @@ still keep the
 self.values = list()
 self.values_counts = dict()
 self.values_index = dict(): record the value and its position in self.values
+3. https://leetcode.com/company/affirm/discuss/1591333/Affirm-or-phone-interview-or-Insert-Delete-GetRandom-O(1)
+PUT can replace existing values if alraedy in the map
+dict -> {key: index}
+list -> [(key, value)]
 """
 
 from collections import defaultdict
