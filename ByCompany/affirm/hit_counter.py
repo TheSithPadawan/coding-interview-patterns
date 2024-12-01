@@ -47,9 +47,7 @@ class HitCounter:
     def hit(self, timestamp: int) -> None:
         self.move(timestamp)
         self.counts[self.last_position] += 1
-        self.last_position += 1
         self.sum += 1
-        print(self.last_position)
 
     def getHits(self, timestamp: int) -> int:
         self.move(timestamp)
